@@ -1,5 +1,30 @@
 import csv
 import subprocess
+import numpy as np
+import pandas as pd
+
+# Gaussian kernel
+def kernel(point, xmat, k):
+    m,n = np.shape(xmat)
+    weights = np.mat(np.eye((m)))
+    
+    for j in range(m):
+        diff = point - xmat[j][1]
+        weights[j, j] = np.exp(diff * diff / (-2.0 * k**2))
+    
+    return weights
+
+def localWeightRegression(point, xmat, ymat, k):
+	wt = kernel(point, xmat, k)
+	print(wt)
+	W = (X * (wt*X.T)).I * (X * wt * ymat.T)
+	diff = W.T * X - ymat
+	den = (diff * wt * diff.T)
+	if(den < 0.000001):
+		return 0.000001
+	num = diff[0, point] * diff[0, point]
+	return novelty
+
 
 time_slices = 10
 
@@ -8,7 +33,7 @@ dict = {}
 
 # Run LDA for data in each time slice and update the hashtable
 for index in range(time_slices):
-	command = "./bin/mallet train-topics  --input tutorial.mallet --num-topics 20 --output-state topic-state.gz --output-topic-keys tutorial_keys.txt --output-doc-topics tutorial_compostion.txt"                        
+	"""command = "./bin/mallet train-topics  --input tutorial.mallet --num-topics 20 --output-state topic-state.gz --output-topic-keys tutorial_keys.txt --output-doc-topics tutorial_compostion.txt"                        
 	subprocess.call(command, shell = True)
 	command = "gunzip topic-state.gz"
 	subprocess.call(command, shell = True)
@@ -19,7 +44,7 @@ for index in range(time_slices):
 		with open('topic-state.csv', 'w') as out_file:
 			writer = csv.writer(out_file)
 			writer.writerow(('title', 'intro'))
-			writer.writerows(lines)
+			writer.writerows(lines)"""
 
 	values = csv.reader(open('topic-state.csv', 'r'), delimiter=' ')
 	for row in values:
@@ -29,3 +54,19 @@ for index in range(time_slices):
 			dict[row[4]] = [0]*time_slices
 			dict[row[4]][index] = 1;
 	print(dict)
+
+nov = {}
+for key in dict.keys():
+	colA = np.zeros((1, time_slices), dtype = int)
+	for j in range(time_slices):
+		colA[0][j] += j
+	mcolA = np.mat(colA)
+
+	colB = dict[key]
+	mcolB = np.mat(colB)
+	print(mcolB)
+	print(key)
+	X = np.concatenate((np.ones((1, time_slices), dtype = int), colA))
+	nov[key] = localWeightRegression(time_slices-1, X.T, mcolB, 0.5)
+
+print(nov)
