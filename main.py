@@ -6,7 +6,7 @@ import pandas as pd
 # Gaussian kernel
 def kernel(point, xmat, k):
     m,n = np.shape(xmat)
-    weights = np.mat(np.eye((m)))
+    weights = np.mat(np.eye((m))) # A square matrix which contains factors along the diagonal
     
     for j in range(m):
         diff = point - xmat[j][1]
@@ -14,16 +14,14 @@ def kernel(point, xmat, k):
     
     return weights
 
-def localWeightRegression(point, xmat, ymat, k):
-	wt = kernel(point, xmat, k)
-	print(wt)
-	W = (X * (wt*X.T)).I * (X * wt * ymat.T)
-	diff = W.T * X - ymat
+def localWeightRegression(point, xmat, ymat, wt):
+	W = (xmat * (wt*xmat.T)).I * (xmat * wt * ymat.T) # Formula for finding weight vector
+	diff = W.T * X - ymat # Difference between actual and prdicted frequency
 	den = (diff * wt * diff.T)
-	if(den < 0.000001):
+	if(den < 0.000001): # If novelty approaches 0/0 form then consider the word non-novel
 		return 0.000001
 	num = diff[0, point] * diff[0, point]
-	return novelty
+	return num/den
 
 
 time_slices = 10
@@ -55,18 +53,20 @@ for index in range(time_slices):
 			dict[row[4]][index] = 1;
 	print(dict)
 
-nov = {}
-for key in dict.keys():
-	colA = np.zeros((1, time_slices), dtype = int)
-	for j in range(time_slices):
-		colA[0][j] += j
-	mcolA = np.mat(colA)
+colA = np.zeros((1, time_slices), dtype = int)
+for j in range(time_slices):
+	colA[0][j] += j
+mcolA = np.mat(colA) # Time values (Independant parameter)
+X = np.concatenate((np.ones((1, time_slices), dtype = int), colA))
+wt = kernel(time_slices-1, X.T, 0.5) # Exponentially decreaing weights for LWLR
 
-	colB = dict[key]
-	mcolB = np.mat(colB)
+nov = {} # Dictionary for storing novelty values
+for key in dict.keys(): # Run through every keyword 
+	colB = dict[key] 
+	mcolB = np.mat(colB) # Vector containg frequency in each time slice 
 	print(mcolB)
 	print(key)
-	X = np.concatenate((np.ones((1, time_slices), dtype = int), colA))
-	nov[key] = localWeightRegression(time_slices-1, X.T, mcolB, 0.5)
+	nov[key] = localWeightRegression(time_slices-1, X, mcolB, wt)
 
+print(wt)
 print(nov)
