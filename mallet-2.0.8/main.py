@@ -16,7 +16,9 @@ def kernel(point, xmat, k):
 
 def localWeightRegression(point, xmat, ymat, wt):
 	W = (xmat * (wt*xmat.T)).I * (xmat * wt * ymat.T) # Formula for finding weight vector
-	diff = W.T * X - ymat # Difference between actual and prdicted frequency
+	diff = W.T * X - ymat # Difference between actual and predicted frequency
+	if(diff[0, point] > 0):
+		return 0.000001
 	den = (diff * wt * diff.T)
 	if(den < 0.000001): # If novelty approaches 0/0 form then consider the word non-novel
 		return 0.000001
@@ -66,6 +68,7 @@ for key in dict.keys(): # Run through every keyword
 	mcolB = np.mat(colB) # Vector containg frequency in each time slice 
 	print(mcolB)
 	print(key)
+	mcolB[0, time_slices-1] = 1000000
 	nov[key] = localWeightRegression(time_slices-1, X, mcolB, wt)
 
 print(wt)
