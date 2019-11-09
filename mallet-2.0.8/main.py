@@ -36,7 +36,7 @@ num_topics = 20
 # We maintain a hashtable of the words in the document along with their number of occurences in each document 
 dict = OrderedDict()
 phi = OrderedDict()
-words_in_topic = [0]*(num_topics*time_slices)
+words_in_topic = [0]*(num_topics)
 
 # Run LDA for data in each time slice and update the hashtable
 for index in range(time_slices):
@@ -60,15 +60,21 @@ for index in range(time_slices):
 		else: # If the word appears for the first time then create a new entry in the hashtable
 			dict[row[4]] = [0]*time_slices
 			dict[row[4]][index] = 1;
-			phi[row[4]] = [0]*(num_topics*time_slices)
+			#phi[row[4]] = [0]*(num_topics*time_slices)
+print(dict)
 
-		phi[row[4]][num_topics*index + int(row[5])] += 1
-		words_in_topic[num_topics*index + int(row[5])] += 1
-	print(dict)
-	print(phi)
+values = csv.reader(open('topic-state.csv', 'r'), delimiter=' ')
+for row in values:
+	if row[4] in phi:
+		phi[row[4]][int(row[5])] += 1
+	else:
+		phi[row[4]] = [0]*num_topics
+		phi[row[4]][int(row[5])] += 1
+
+	words_in_topic[int(row[5])] += 1
 
 for key in dict.keys():
-	for index in range(num_topics*time_slices):
+	for index in range(num_topics):
 		phi[key][index] /= words_in_topic[index]
 print(phi)
 
@@ -94,8 +100,29 @@ phi_mat = np.array([phi[key] for key in dict.keys()])
 print(np.shape(phi_mat))
 nov_mat = np.array([nov[key] for key in dict.keys()])
 nov_mat = (np.mat(nov_mat)).T
-print(nov_mat)
+#print(nov_mat)
 print(np.shape(nov_mat))
+
+"""with open('tutorial_compostion.txt', 'r') as in_file:
+	stripped = (line.strip() for line in in_file)
+	lines = (line.split(" ") for line in stripped if line)
+	with open('topic_composition.csv', 'w') as out_file:
+		writer = csv.writer(out_file)
+		writer.writerow(('title', 'intro'))
+		writer.writerows(lines)"""
+
+values = csv.reader(open('topic_composition.csv', 'r'), delimiter='\t')
+theta = [0]*num_topics
+for row in values:
+	for index in range(2,num_topics+1):
+		theta[index-2] += float(row[index].strip('"'))
+
+summation = 0
+for index in range(num_topics):
+	theta[index] /= 10
+	summation += theta[index]
+print(theta)
+print(summation)
 #print(wt)
 #print(nov)
 
