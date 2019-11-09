@@ -15,9 +15,9 @@ def kernel(point, xmat, k):
     return weights
 
 def localWeightRegression(point, xmat, ymat, wmat):
-	print(np.shape(xmat))
-	print(np.shape(wmat))
-	print(np.shape(ymat))
+	#print(np.shape(xmat))
+	#print(np.shape(wmat))
+	#print(np.shape(ymat))
 	W = (xmat * (wmat*xmat.T)).I * (xmat * wmat * ymat.T) # Formula for finding weight vector
 	diff = W.T * X - mcolB # Difference between actual and predicted frequency
 	if(diff[0, point] > 0):
@@ -30,9 +30,12 @@ def localWeightRegression(point, xmat, ymat, wmat):
 
 
 time_slices = 10
+num_topics = 20*time_slices
 
 # We maintain a hashtable of the words in the document along with their number of occurences in each document 
 dict = {}
+phi = {}
+words_in_topic = [0]*num_topics
 
 # Run LDA for data in each time slice and update the hashtable
 for index in range(time_slices):
@@ -58,6 +61,20 @@ for index in range(time_slices):
 			dict[row[4]][index] = 1;
 	print(dict)
 
+	for key in dict.keys():
+		phi[key] = [0]*num_topics
+
+	values = csv.reader(open('topic-state.csv', 'r'), delimiter=' ')
+	for row in values:
+		phi[row[4]][int(row[5])] += 1
+		words_in_topic[int(row[5])] += 1
+
+	for key in dict.keys():
+		for index in range(num_topics):
+			phi[key][index] /= words_in_topic[index]
+	print(phi)
+
+
 colA = np.zeros((1, time_slices), dtype = int)
 for j in range(time_slices):
 	colA[0][j] += j
@@ -69,12 +86,16 @@ nov = {} # Dictionary for storing novelty values
 for key in dict.keys(): # Run through every keyword 
 	colB = dict[key] 
 	mcolB = np.mat(colB) # Vector containg frequency in each time slice 
-	print(mcolB)
-	print(key)
+	#print(mcolB)
+	#print(key)
 	mcolB[0, time_slices-1] = 2000050
 	mcolB[0, time_slices-2] = 1000000
-	print(X[0:2, :][:, 0:10])
+	#print(X[0:2, :][:, 0:10])
 	nov[key] = localWeightRegression(time_slices-1, X[0:2, :][:, 0:time_slices-1], mcolB[0,:][:, 0:time_slices-1], wt[0:time_slices-1, :][:, 0:time_slices-1])
 
-print(wt)
-print(nov)
+#print(wt)
+#print(nov)
+
+
+
+
