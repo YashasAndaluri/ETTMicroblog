@@ -2,6 +2,7 @@ import csv
 import subprocess
 import numpy as np
 import pandas as pd
+from collections import OrderedDict
 
 # Gaussian kernel
 def kernel(point, xmat, k):
@@ -33,8 +34,8 @@ time_slices = 10
 num_topics = 20
 
 # We maintain a hashtable of the words in the document along with their number of occurences in each document 
-dict = {}
-phi = {}
+dict = OrderedDict()
+phi = OrderedDict()
 words_in_topic = [0]*(num_topics*time_slices)
 
 # Run LDA for data in each time slice and update the hashtable
@@ -78,7 +79,7 @@ mcolA = np.mat(colA) # Time values (Independant parameter)
 X = np.concatenate((np.ones((1, time_slices), dtype = int), colA))
 wt = kernel(time_slices-1, X.T, 0.5) # Exponentially decreaing weights for LWLR
 
-nov = {} # Dictionary for storing novelty values
+nov = OrderedDict() # Dictionary for storing novelty values
 for key in dict.keys(): # Run through every keyword 
 	colB = dict[key] 
 	mcolB = np.mat(colB) # Vector containg frequency in each time slice 
@@ -87,8 +88,14 @@ for key in dict.keys(): # Run through every keyword
 	mcolB[0, time_slices-1] = 2000050
 	mcolB[0, time_slices-2] = 1000000
 	#print(X[0:2, :][:, 0:10])
-	nov[key] = localWeightRegression(time_slices-1, X[0:2, :][:, 0:time_slices-1], mcolB[0,:][:, 0:time_slices-1], wt[0:time_slices-1, :][:, 0:time_slices-1])
+	nov[key] = (localWeightRegression(time_slices-1, X[0:2, :][:, 0:time_slices-1], mcolB[0,:][:, 0:time_slices-1], wt[0:time_slices-1, :][:, 0:time_slices-1]))[0, 0]
 
+phi_mat = np.array([phi[key] for key in dict.keys()])
+print(np.shape(phi_mat))
+nov_mat = np.array([nov[key] for key in dict.keys()])
+nov_mat = (np.mat(nov_mat)).T
+print(nov_mat)
+print(np.shape(nov_mat))
 #print(wt)
 #print(nov)
 
