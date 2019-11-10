@@ -121,11 +121,32 @@ summation = 0
 for index in range(num_topics):
 	theta[index] /= 10
 	summation += theta[index]
+theta_mat = (np.mat(theta)).T
 print(theta)
 print(summation)
-#print(wt)
-#print(nov)
 
+
+num_iterations = 10
+rho = 2
+nu_t = np.mat(np.zeros((num_topics,1)))
+n_z = np.mat(np.zeros((num_topics,1)))
+f_z = np.mat(np.zeros((num_topics,1)))
+
+for iter in range(num_iterations):
+	term1 = np.linalg.inv(phi_mat.T.dot(phi_mat) + rho*np.mat(np.eye((num_topics))))
+	term2 = phi_mat.T.dot(nov_mat) + rho*(f_z-theta_mat) -  nu_t
+	n_z = term1.dot(term2)
+
+	#term1 = np.linalg.inv(phi_mat.T.dot(phi_mat) + rho*np.mat(np.eye((num_topics))))
+	#term2 = phi_mat.T.dot(nov_mat) + rho*(n_z-theta_mat) -  nu_t
+	#f_z = term1.dot(term2)
+	f_z - theta_mat - (rho*n_z + nu_t)/(1+rho)
+
+	nu_t = nu_t + rho*(n_z + f_z - theta_mat)
+
+print(np.shape(theta_mat))
+print(n_z)
+print(f_z)
 
 
 
