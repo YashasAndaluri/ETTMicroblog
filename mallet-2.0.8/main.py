@@ -29,6 +29,20 @@ def localWeightRegression(point, xmat, ymat, wmat):
 	num = diff[0, point] * diff[0, point]
 	return num/den
 
+def KLD(p, q):
+	m, n = np.shape(np.mat(p))
+	p = np.asarray(p, dtype=np.float)
+	q = np.asarray(q, dtype=np.float)
+	divergance = 0
+	for i in range(n):
+		if p[i]==0 or q[i]==0:
+			if not(p[i]==0 and q[i]==0):
+				divergance += 1
+		else:
+			divergance += p[i] * np.log(p[i] / q[i])
+	#print(divergance)
+	return divergance 
+
 
 time_slices = 10
 num_topics = 20
@@ -50,7 +64,6 @@ for index in range(time_slices):
 		lines = (line.split(",") for line in stripped if line)
 		with open('topic-state.csv', 'w') as out_file:
 			writer = csv.writer(out_file)
-			writer.writerow(('title', 'intro'))
 			writer.writerows(lines)"""
 
 	values = csv.reader(open('topic-state.csv', 'r'), delimiter=' ')
@@ -108,7 +121,6 @@ print(np.shape(nov_mat))
 	lines = (line.split(" ") for line in stripped if line)
 	with open('topic_composition.csv', 'w') as out_file:
 		writer = csv.writer(out_file)
-		writer.writerow(('title', 'intro'))
 		writer.writerows(lines)"""
 
 values = csv.reader(open('topic_composition.csv', 'r'), delimiter='\t')
@@ -165,17 +177,41 @@ for key in phi.keys():
 		phi_prev[key][index] /= words_in_topic_prev[index]
 phi_mat_prev = np.array([phi_prev[key] for key in phi.keys()])
 
+max_deviance = 25
 for index1 in range(num_topics):
+	flag = 0
 	if f_z[index1] < 0.000001:
 		f_z[index1] = 0.000001
 	if n_z[index1]/f_z[index1] > threshold:
-		print("Emerging")
+		for index2 in range(num_topics):
+			if KLD(phi_mat_prev[:, :][:, index2], phi_mat[:, :][:, index1]) < max_deviance:
+				flag = 1
+				break
+		if flag == 0:
+			print("Emerging")
+		else:
+			print("Growing")
+
 	elif n_z[index1]/f_z[index1] > 1:
-		print("Growing")
-	elif n_z[index1]/f_z[index1] < 1:
-		print("Fading")
-	elif n_z[index1]/f_z[index1] < threshold:
-		print("Noise")
+		for index2 in range(num_topics):
+			if KLD(phi_mat_prev[:, :][:, index2], phi_mat[:, :][:, index1]) < max_deviance:
+				flag = 1
+				break
+		if flag == 1:
+			print("Growing")
+		else:
+			print("Noise")
+
+	else:
+		for index2 in range(num_topics):
+			if KLD(phi_mat_prev[:, :][:, index2], phi_mat[:, :][:, index1]) < max_deviance:
+				flag = 1
+				break
+		if flag == 1:
+			print("Fading")
+		else:
+			print("Noise")
+
 	"""q = phi_mat[:, :][:, index1]
 	for index2 in range(num_topics):
 		p = phi_mat_prev[:, :][:, index2]
