@@ -3,7 +3,6 @@ timeslice = None
 with open('tweetfiles.txt','r',encoding="utf-8",errors='ignore') as bigfile:
     i=0
     j=0
-    f=0
     for lineno, line in enumerate(bigfile):
         #if lineno % lines_per_file == 0:
         #print(int(line[6:8]))
@@ -35,13 +34,15 @@ with open('tweetfiles.txt','r',encoding="utf-8",errors='ignore') as bigfile:
             j=335
         else:
             print("Error at month")
-
+        if i==122 and j<335:
+            break
         if (j + int(line[9:11])) > 3*i:
             i=i+1
             if timeslice:
                 timeslice.close()
             filename = 'timeslice_{}.txt'.format(i)
             timeslice = open(filename, "w",encoding='utf-8',errors='ignore')
-        timeslice.write(line)
+        if (j + int(line[9:11])) <= 3*i:
+            timeslice.write(line)
     if timeslice:
         timeslice.close()
