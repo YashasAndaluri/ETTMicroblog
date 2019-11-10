@@ -73,7 +73,7 @@ for row in values:
 
 	words_in_topic[int(row[5])] += 1
 
-for key in dict.keys():
+for key in phi.keys():
 	for index in range(num_topics):
 		phi[key][index] /= words_in_topic[index]
 print(phi)
@@ -86,7 +86,7 @@ X = np.concatenate((np.ones((1, time_slices), dtype = int), colA))
 wt = kernel(time_slices-1, X.T, 0.5) # Exponentially decreaing weights for LWLR
 
 nov = OrderedDict() # Dictionary for storing novelty values
-for key in dict.keys(): # Run through every keyword 
+for key in phi.keys(): # Run through every keyword 
 	colB = dict[key] 
 	mcolB = np.mat(colB) # Vector containg frequency in each time slice 
 	#print(mcolB)
@@ -96,9 +96,9 @@ for key in dict.keys(): # Run through every keyword
 	#print(X[0:2, :][:, 0:10])
 	nov[key] = (localWeightRegression(time_slices-1, X[0:2, :][:, 0:time_slices-1], mcolB[0,:][:, 0:time_slices-1], wt[0:time_slices-1, :][:, 0:time_slices-1]))[0, 0]
 
-phi_mat = np.array([phi[key] for key in dict.keys()])
+phi_mat = np.array([phi[key] for key in phi.keys()])
 print(np.shape(phi_mat))
-nov_mat = np.array([nov[key] for key in dict.keys()])
+nov_mat = np.array([nov[key] for key in phi.keys()])
 nov_mat = (np.mat(nov_mat)).T
 #print(nov_mat)
 print(np.shape(nov_mat))
@@ -122,7 +122,7 @@ for index in range(num_topics):
 	theta[index] /= 10
 	summation += theta[index]
 theta_mat = (np.mat(theta)).T
-print(theta)
+print(theta_mat)
 print(summation)
 
 
@@ -148,5 +148,37 @@ print(np.shape(theta_mat))
 print(n_z)
 print(f_z)
 
+threshold = 5
+phi_prev = OrderedDict()
+words_in_topic_prev = [0]*num_topics
+for key in phi.keys():
+	phi_prev[key] = [0]*num_topics 
+
+values = csv.reader(open('topic-state.csv', 'r'), delimiter=' ')
+for row in values:
+	if row[4] in phi:
+		phi_prev[row[4]][int(row[5])] += 1
+	words_in_topic_prev[int(row[5])] += 1
+
+for key in phi.keys():
+	for index in range(num_topics):
+		phi_prev[key][index] /= words_in_topic_prev[index]
+phi_mat_prev = np.array([phi_prev[key] for key in phi.keys()])
+
+for index1 in range(num_topics):
+	if f_z[index1] < 0.000001:
+		f_z[index1] = 0.000001
+	if n_z[index1]/f_z[index1] > threshold:
+		print("Emerging")
+	elif n_z[index1]/f_z[index1] > 1:
+		print("Growing")
+	elif n_z[index1]/f_z[index1] < 1:
+		print("Fading")
+	elif n_z[index1]/f_z[index1] < threshold:
+		print("Noise")
+	"""q = phi_mat[:, :][:, index1]
+	for index2 in range(num_topics):
+		p = phi_mat_prev[:, :][:, index2]
+		if(KLD(p, q) < min_deviance):"""
 
 
