@@ -72,7 +72,7 @@ for index in range(time_slices):
 			dict[row[4]][index]+=1
 		else: # If the word appears for the first time then create a new entry in the hashtable
 			dict[row[4]] = [0]*time_slices
-			dict[row[4]][index] = 1;
+			dict[row[4]][index] = 1 # :)
 			#phi[row[4]] = [0]*(num_topics*time_slices)
 print(dict)
 
