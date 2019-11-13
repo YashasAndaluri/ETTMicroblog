@@ -58,17 +58,24 @@ def KLD(p, q):
 	p = np.asarray(p, dtype=np.float)
 	q = np.asarray(q, dtype=np.float)
 	divergance = 0
+	print(p)
+	print(q)
 	for i in range(n):
 		if p[i]>0.0001 and q[i]<0.0001:
 			divergance += p[i]*np.log(p[i]*1000)
 		elif p[i]>0.0001:
 			divergance += p[i] * np.log(p[i] / q[i])
+	for i in range(n):
+		if q[i]>0.0001 and p[i]<0.0001:
+			divergance += q[i]*np.log(q[i]*1000)
+		elif q[i]>0.0001:
+			divergance += q[i] * np.log(q[i] / p[i])
 	#print(divergance)
-	return divergance 
+	return divergance/2 
 
 
 time_slices = 10
-num_topics = 20
+num_topics = 25
 
 # We maintain a hashtable of the words in the document along with their number of occurences in each document 
 dict = OrderedDict()
@@ -293,7 +300,7 @@ for row in values:
 
 #print(phi_new)
 #print(words_in_topic)
-for key in phi_new.keys():
+for key in phi_prev.keys():
 	for index in range(num_topics):	
 		phi_prev[key][index] /= words_in_topic_prev[index]
 
@@ -315,12 +322,11 @@ for index1 in range(num_topics):
 				q[key] = 0
 
 		for key in phi_prev.keys():
-			if phi_prev[key][index2] > 0 and not(key in p):
-				if key in phi_new:
-					p[key] = phi_new[key][index1]
-				else:
-					p[key] = 0
+			if phi_prev[key][index2] > 0:
 				q[key] = phi_prev[key][index2]
+				if not(key in phi_new):
+					p[key] = 0
+
 		p_arr = np.array([p[key] for key in p.keys()])
 		q_arr = np.array([q[key] for key in q.keys()])
 
