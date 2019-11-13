@@ -58,8 +58,8 @@ def KLD(p, q):
 	p = np.asarray(p, dtype=np.float)
 	q = np.asarray(q, dtype=np.float)
 	divergance = 0
-	print(p)
-	print(q)
+	#print(p)
+	#print(q)
 	for i in range(n):
 		if p[i]>0.0001 and q[i]<0.0001:
 			divergance += p[i]*np.log(p[i]*1000)
